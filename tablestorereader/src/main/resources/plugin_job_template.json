@@ -1,0 +1,17 @@
+{
+  "name": "tablestorereader",
+  "parameter": {
+    "endpoint": "",
+    "accessId": "",
+    "accessKey": "",
+    "instanceName": "",
+    "columnName":[],
+    "table": [],
+    "index": [],
+    "limit": "",
+    "query": {
+      "type": "",
+      "params": { }
+    }
+  }
+}
