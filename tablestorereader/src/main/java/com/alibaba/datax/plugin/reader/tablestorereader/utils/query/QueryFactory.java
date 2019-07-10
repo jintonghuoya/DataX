@@ -20,10 +20,16 @@ public class QueryFactory {
      */
     public static Query build(Configuration param) throws Exception {
 
-        String aClass = param.getString(CLASS);
+        String aClass = null;
 
-        if (null == aClass) {
+        if (null == param) {
             aClass = DEFAULT_CLASS;
+        } else {
+            aClass = param.getString(CLASS);
+
+            if (null == aClass) {
+                aClass = DEFAULT_CLASS;
+            }
         }
 
         QueryBuilder builder = null;
