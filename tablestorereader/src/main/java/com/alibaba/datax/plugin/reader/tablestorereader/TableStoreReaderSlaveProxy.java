@@ -186,7 +186,7 @@ public class TableStoreReaderSlaveProxy {
 
         TableStoreConf conf = GsonParser.jsonToConf(configuration.getString(TableStoreConst.OTS_CONF));
 
-        Query query = QueryFactory.build(Configuration.from(conf.getQueryRow()));
+        Query query = QueryFactory.build(Configuration.from(conf.getQueryRow()), false);
 
         ClientConfiguration configure1 = new ClientConfiguration();
 

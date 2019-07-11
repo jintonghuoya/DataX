@@ -188,7 +188,7 @@ public class Common {
         conf.setColumnNames(ParamChecker.checkListAndGet(param, Key.COLUMN_NAME, true).stream()
                 .map(Object::toString).collect(Collectors.toList()));
 
-        QueryFactory.build(param.getConfiguration(Key.QUERY));
+        QueryFactory.build(param.getConfiguration(Key.QUERY), false);
 
         conf.setQueryRow(JSON.toJSONString(param.get(Key.QUERY)));
 
