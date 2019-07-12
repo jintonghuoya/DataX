@@ -14,12 +14,18 @@ public class TableStoreConst {
     public final static String NAME = "name";
     public final static String TYPE = "type";
     public final static String VALUE = "value";
-    
+    /**
+     * 固定以该字段为索引
+     */
+    public final static String HASH_KEY = "hash_key";
+
     public final static String OTS_CONF = "OTS_CONF";
     public final static String OTS_RANGE = "OTS_RANGE";
     public final static String OTS_DIRECTION = "OTS_DIRECTION";
-    
+    public final static String OTS_HASH_KEY_PREFIX = "OTS_HASH_KEY_PREFIX";
+
     // options
     public final static String RETRY = "maxRetryTime";
     public final static String SLEEP_IN_MILLI_SECOND = "retrySleepInMillionSecond";
+
 }

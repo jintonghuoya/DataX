@@ -22,12 +22,15 @@ import com.alicloud.openservices.tablestore.model.Row;
 import com.alicloud.openservices.tablestore.model.search.SearchQuery;
 import com.alicloud.openservices.tablestore.model.search.SearchRequest;
 import com.alicloud.openservices.tablestore.model.search.SearchResponse;
+import com.alicloud.openservices.tablestore.model.search.query.BoolQuery;
 import com.alicloud.openservices.tablestore.model.search.query.MatchAllQuery;
+import com.alicloud.openservices.tablestore.model.search.query.PrefixQuery;
 import com.alicloud.openservices.tablestore.model.search.query.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -185,8 +188,16 @@ public class TableStoreReaderSlaveProxy {
     public void read(RecordSender sender, Configuration configuration) throws Exception {
 
         TableStoreConf conf = GsonParser.jsonToConf(configuration.getString(TableStoreConst.OTS_CONF));
+        String hashKeyPrefix = configuration.getString(TableStoreConst.OTS_HASH_KEY_PREFIX);
 
-        Query query = QueryFactory.build(Configuration.from(conf.getQueryRow()), false);
+        Query customQuery = QueryFactory.build(Configuration.from(conf.getQueryRow()), false);
+
+        BoolQuery boolQuery = new BoolQuery();
+        PrefixQuery prefixQuery = new PrefixQuery();
+        prefixQuery.setPrefix(hashKeyPrefix);
+        prefixQuery.setFieldName(TableStoreConst.HASH_KEY);
+
+        boolQuery.setMustQueries(Arrays.asList(prefixQuery, customQuery));
 
         ClientConfiguration configure1 = new ClientConfiguration();
 
@@ -201,7 +212,7 @@ public class TableStoreReaderSlaveProxy {
         );
 
         SearchQuery searchQuery = new SearchQuery();
-        searchQuery.setQuery(query);
+        searchQuery.setQuery(boolQuery);
         searchQuery.setLimit(conf.getLimit());
         searchQuery.setGetTotalCount(true);
         SearchRequest searchRequest = new SearchRequest(conf.getTableName(), conf.getIndexName(), searchQuery);
@@ -209,17 +220,17 @@ public class TableStoreReaderSlaveProxy {
         columnsToGet.setColumns(conf.getColumnNames());
         searchRequest.setColumnsToGet(columnsToGet);
 
+        int count = 0;
+
         SearchResponse resp = syncClient.search(searchRequest);
 
         if (!resp.isAllSuccess()) {
             throw new RuntimeException("not all success");
         }
 
-        List<Row> rows = resp.getRows();
+        count += resp.getRows().size();
+        rowsToSender(resp.getRows(), sender, conf.getColumnNames());
 
-        LOG.info("read begin.");
-
-        //读到NextToken为null为止，即读出全部数据
         while (resp.getNextToken() != null) {
             //把Token设置到下一次请求中
             searchRequest.getSearchQuery().setToken(resp.getNextToken());
@@ -229,11 +240,13 @@ public class TableStoreReaderSlaveProxy {
                 throw new RuntimeException("not all success");
             }
 
-            rowsToSender(rows, sender, conf.getColumnNames());
+            count += resp.getRows().size();
+            rowsToSender(resp.getRows(), sender, conf.getColumnNames());
         }
 
         syncClient.shutdown();
 
-        LOG.info("read end.");
+        LOG.info("get by token totalCount:{}", resp.getTotalCount());
+        LOG.info("read end. hash_key:{} count:{}", hashKeyPrefix, count);
     }
 }
