@@ -4,6 +4,8 @@ import com.alibaba.datax.common.util.Configuration;
 import com.alibaba.datax.plugin.reader.tablestorereader.model.TableStorePrimaryKeyColumn;
 import com.alibaba.datax.plugin.reader.tablestorereader.model.TableStoreRange;
 import com.alicloud.openservices.tablestore.model.TableMeta;
+import com.alicloud.openservices.tablestore.model.search.query.Query;
+import com.meizhilab.basis.system.util.kryo.KryoUtil;
 
 import java.util.List;
 import java.util.Map;
@@ -66,6 +68,20 @@ public class ParamChecker {
         }
         return value;
     }
+
+    public static String checkQueryAndGet(Configuration param, String key) {
+
+        String string = param.getString(key);
+
+        Object o = KryoUtil.readFromString(string);
+
+        if (o instanceof Query) {
+            return string;
+        } else {
+            throw new RuntimeException("格式错误");
+        }
+    }
+
 
     public static List<Object> checkListAndGet(Map<String, Object> range, String key) {
         Object obj = range.get(key);

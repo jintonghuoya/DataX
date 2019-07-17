@@ -7,16 +7,15 @@ import com.alibaba.datax.plugin.reader.tablestorereader.model.TableStoreColumn;
 import com.alibaba.datax.plugin.reader.tablestorereader.model.TableStoreConf;
 import com.alibaba.datax.plugin.reader.tablestorereader.model.TableStoreConst;
 import com.alibaba.datax.plugin.reader.tablestorereader.model.TableStorePrimaryKeyColumn;
-import com.alibaba.datax.plugin.reader.tablestorereader.utils.query.QueryFactory;
 import com.alibaba.fastjson.JSON;
 import com.alicloud.openservices.tablestore.model.*;
 
 import com.alicloud.openservices.tablestore.model.Column;
-import org.checkerframework.checker.units.qual.K;
+import com.meizhilab.basis.system.util.kryo.KryoUtil;
 
+import javax.management.Query;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 public class Common {
@@ -187,10 +186,7 @@ public class Common {
         conf.setLimit(ParamChecker.checkIntegerAndGet(param, Key.LIMIT, 1000));
         conf.setColumnNames(ParamChecker.checkListAndGet(param, Key.COLUMN_NAME, true).stream()
                 .map(Object::toString).collect(Collectors.toList()));
-
-        QueryFactory.build(param.getConfiguration(Key.QUERY), false);
-
-        conf.setQueryRow(JSON.toJSONString(param.get(Key.QUERY)));
+        conf.setQueryRow(ParamChecker.checkQueryAndGet(param, Key.QUERY_STRING));
 
         return conf;
     }

@@ -36,8 +36,6 @@ public final class Key {
      */
     public final static String INDEX_NAME = "index";
 
-    public final static String COLUMN = "column";
-
     /**
      * 要导出的属性列name 为List结构 不能为空
      */
@@ -48,22 +46,5 @@ public final class Key {
      */
     public final static String LIMIT = "limit";
 
-    //======================================================
-    // 注意：如果range-begin大于range-end,那么系统将逆序导出所有数据
-    //======================================================
-    // Range的组织格式
-    // "range":{
-    //   "begin":[],
-    //   "end":[],
-    //   "split":[]
-    // }
-    public final static String RANGE = "range";
-
-    public final static String RANGE_BEGIN = "begin";
-
-    public final static String RANGE_END = "end";
-
-    public final static String RANGE_SPLIT = "split";
-
-    public final static String QUERY = "query";
+    public final static String QUERY_STRING = "queryString";
 }

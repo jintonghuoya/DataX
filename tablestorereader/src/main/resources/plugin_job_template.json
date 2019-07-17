@@ -9,9 +9,6 @@
     "table": [],
     "index": [],
     "limit": "",
-    "query": {
-      "type": "",
-      "params": { }
-    }
+    "queryString": ""
   }
 }

@@ -62,22 +62,6 @@ public class TableStoreReaderMasterProxy {
         meta = getTableMeta(tableStoreClient, conf.getTableName());
 
         LOG.info("Table Meta : {}", GsonParser.metaToJson(meta));
-
-//        conf.setColumns(ReaderModelParser.parseOTSColumnList(ParamChecker.checkListAndGet(param, Key.COLUMN, true)));
-
-//        Map<String, Object> rangeMap = ParamChecker.checkMapAndGet(param, Key.RANGE, true);
-//        conf.setRangeBegin(ReaderodelParser.parsePrimaryKey(ParamChecker.checkListAndGet(rangeMap, Key.RANGE_BEGIN, false)));
-//        conf.setRangeEnd(ReaderModelParser.parsePrimaryKey(ParamChecker.checkListAndGet(rangeMap, Key.RANGE_END, false)));
-
-//        range = ParamChecker.checkRangeAndGet(meta, this.conf.getRangeBegin(), this.conf.getRangeEnd());
-
-//        direction = ParamChecker.checkDirectionAndEnd(meta, range.getBegin(), range.getEnd());
-
-        LOG.info("Direction : {}", direction);
-
-//        List<PrimaryKeyValue> points = ReaderModelParser.parsePrimaryKey(ParamChecker.checkListAndGet(rangeMap, Key.RANGE_SPLIT));
-//        ParamChecker.checkInputSplitPoints(meta, range, direction, points);
-//        conf.setRangeSplit(points);
     }
 
     /**
@@ -96,11 +80,6 @@ public class TableStoreReaderMasterProxy {
 
         List<Configuration> configurations = new ArrayList<Configuration>();
 
-//        List<TableStoreRange> ranges = new ArrayList<TableStoreRange>();
-
-//        ranges.add(range);
-
-        // 解决大量的Split Point序列化消耗内存的问题
         // 因为slave中不会使用这个配置，所以置为空
         this.conf.setRangeSplit(null);
 
@@ -121,17 +100,6 @@ public class TableStoreReaderMasterProxy {
 
             configurations.add(configuration);
         });
-
-//        for (TableStoreRange item : ranges) {
-//            Configuration configuration = Configuration.newDefault();
-//            configuration.set(TableStoreConst.OTS_CONF, GsonParser.confToJson(this.conf));
-//            // 执行的最小单位是， 分割后的task进行的，故此设置改config会传递到task中，
-//            // 起初传递进来的文件不会传递到task中
-//
-//            configuration.set(TableStoreConst.OTS_RANGE, GsonParser.rangeToJson(item));
-//            configuration.set(TableStoreConst.OTS_DIRECTION, GsonParser.directionToJson(direction));
-//            configurations.add(configuration);
-//        }
 
         LOG.info("Configuration list count : " + configurations.size());
 
@@ -155,79 +123,4 @@ public class TableStoreReaderMasterProxy {
                 conf.getSleepInMilliSecond()
         );
     }
-//
-//    private RowPrimaryKey getPKOfFirstRow(
-//            TableStoreRange range, Direction direction) throws Exception {
-//
-//        RangeRowQueryCriteria cur = new RangeRowQueryCriteria(this.conf.getTableName());
-//        cur.setInclusiveStartPrimaryKey(range.getBegin());
-//        cur.setExclusiveEndPrimaryKey(range.getEnd());
-//        cur.setLimit(1);
-//        cur.setColumnsToGet(Common.getPrimaryKeyNameList(meta));
-//        cur.setDirection(direction);
-//
-//        return RetryHelper.executeWithRetry(
-//                new GetFirstRowPrimaryKeyCallable(ots, meta, cur),
-//                conf.getRetry(),
-//                conf.getSleepInMilliSecond()
-//        );
-//    }
-
-//    private List<TableStoreRange> defaultRangeSplit(OTSClient ots, TableMeta meta, TableStoreRange range, int num) throws Exception {
-//        if (num == 1) {
-//            List<TableStoreRange> ranges = new ArrayList<TableStoreRange>();
-//            ranges.add(range);
-//            return ranges;
-//        }
-//
-//        TableStoreRange reverseRange = new TableStoreRange();
-//        reverseRange.setBegin(range.getEnd());
-//        reverseRange.setEnd(range.getBegin());
-//
-//        Direction reverseDirection = (direction == Direction.FORWARD ? Direction.BACKWARD : Direction.FORWARD);
-//
-//        RowPrimaryKey realBegin = getPKOfFirstRow(range, direction);
-//        RowPrimaryKey realEnd = getPKOfFirstRow(reverseRange, reverseDirection);
-//
-//        // 因为如果其中一行为空，表示这个范围内至多有一行数据
-//        // 所以不再细分，直接使用用户定义的范围
-//        if (realBegin == null || realEnd == null) {
-//            List<TableStoreRange> ranges = new ArrayList<TableStoreRange>();
-//            ranges.add(range);
-//            return ranges;
-//        }
-//
-//        // 如果出现realBegin，realEnd的方向和direction不一致的情况，直接返回range
-//        int cmp = Common.compareRangeBeginAndEnd(meta, realBegin, realEnd);
-//        Direction realDirection = cmp > 0 ? Direction.BACKWARD : Direction.FORWARD;
-//        if (realDirection != direction) {
-//            LOG.warn("Expect '" + direction + "', but direction of realBegin and readlEnd is '" + realDirection + "'");
-//            List<TableStoreRange> ranges = new ArrayList<TableStoreRange>();
-//            ranges.add(range);
-//            return ranges;
-//        }
-//
-//        List<TableStoreRange> ranges = RangeSplit.rangeSplitByCount(meta, realBegin, realEnd, num);
-//
-//        if (ranges.isEmpty()) { // 当PartitionKey相等时，工具内部不会切分Range
-//            ranges.add(range);
-//        } else {
-//            // replace first and last
-//            TableStoreRange first = ranges.get(0);
-//            TableStoreRange last = ranges.get(ranges.size() - 1);
-//
-//            first.setBegin(range.getBegin());
-//            last.setEnd(range.getEnd());
-//        }
-//
-//        return ranges;
-//    }
-
-//    private List<TableStoreRange> userDefinedRangeSplit(TableMeta meta, TableStoreRange range, List<PrimaryKeyValue> points) {
-//        List<TableStoreRange> ranges = RangeSplit.rangeSplitByPoint(meta, range.getBegin(), range.getEnd(), points);
-//        if (ranges.isEmpty()) { // 当PartitionKey相等时，工具内部不会切分Range
-//            ranges.add(range);
-//        }
-//        return ranges;
-//    }
 }
