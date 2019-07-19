@@ -39,8 +39,8 @@ OTS是构建在阿里云飞天分布式系统之上的 NoSQL数据库服务，�
                 "writer": {
                     "name": "otswriter",
                     "parameter": {
-                    "accessId": "LTAIrWgYsQEGTH6D",
-                    "accessKey": "Zd8AaNWmnPVaRMxQ8lajRt7vQuTDNP",
+                    "accessId": "",
+                    "accessKey": "",
                     "column": [
                         {
                             "name": "crhwd09fsydc",
@@ -55,8 +55,8 @@ OTS是构建在阿里云飞天分布式系统之上的 NoSQL数据库服务，�
                             "type": "STRING"
                         }
                     ],
-                    "endpoint": "https://lab-ts-dev01.cn-shanghai.ots.aliyuncs.com",
-                    "instanceName": "lab-ts-dev01",
+                    "endpoint": "",
+                    "instanceName": "",
                     "primaryKey": [
                         {
                             "name": "hash_key",
@@ -75,8 +75,8 @@ OTS是构建在阿里云飞天分布式系统之上的 NoSQL数据库服务，�
                             "type": "INTEGER"
                         }
                     ],
-                    "table": "sink_table_master_01",
-                    "tableLogicalName": "rhwd068xmgwtest",
+                    "table": "",
+                    "tableLogicalName": "",
                     "writeMode": "PutRow"
                     }
                 }
