@@ -13,6 +13,27 @@ import java.util.*;
 
 public class Common {
 
+    /**
+     * 主键列中的逻辑表名
+     */
+    private static final String TABLE_LOGICAL_NAME = "table_logical_name";
+
+    /**
+     * 主键列中的逻辑数据中主键的列的连接字符串
+     * 由table_logical_name 和 primary_key_combo 就可保持记录的唯一性
+     */
+    private static final String PRIMARY_KEY_COMBO = "primary_key_combo";
+
+    /**
+     * 主键列中字段，该字段在tableStore保持自增
+     */
+    private static final String SERIAL_NUMBER = "serial_number";
+
+    /**
+     * 主键列中分区键, 由各字段计算出来,保持hash_key的值分布均匀
+     */
+    private static final String HASH_KEY = "hash_key";
+
     public static String getDetailMessage(Exception exception) {
         if (exception instanceof TableStoreException) {
             TableStoreException e = (TableStoreException) exception;
@@ -54,10 +75,10 @@ public class Common {
         }
         // 获取属性列，并根据sequence排序，生成对应的
         PrimaryKeyBuilder primaryKeyBuilder = PrimaryKeyBuilder.createPrimaryKeyBuilder();
-        primaryKeyBuilder.addPrimaryKeyColumn("hash_key", PrimaryKeyValue.fromString(hashKey))
-                .addPrimaryKeyColumn("table_logical_name", PrimaryKeyValue.fromString(tableLogicalName))
-                .addPrimaryKeyColumn("primary_key_combo", PrimaryKeyValue.fromString(primaryKeyCombo))
-                .addPrimaryKeyColumn("serial_number", PrimaryKeyValue.AUTO_INCREMENT);
+        primaryKeyBuilder.addPrimaryKeyColumn(HASH_KEY, PrimaryKeyValue.fromString(hashKey))
+                .addPrimaryKeyColumn(TABLE_LOGICAL_NAME, PrimaryKeyValue.fromString(tableLogicalName))
+                .addPrimaryKeyColumn(PRIMARY_KEY_COMBO, PrimaryKeyValue.fromString(primaryKeyCombo))
+                .addPrimaryKeyColumn(SERIAL_NUMBER, PrimaryKeyValue.AUTO_INCREMENT);
         return primaryKeyBuilder.build();
     }
 
@@ -84,6 +105,11 @@ public class Common {
         Collections.sort(targetList);
         StringBuffer sb = new StringBuffer();
         for (int i = 0; i < targetList.size(); i++) {
+
+            if (!targetList.get(i).getPrimaryKey()) {
+                continue;
+            }
+
             String value = valueMap.get(targetList.get(i).getName()).asString();
             if (!Strings.isNullOrEmpty(value)) {
                 sb.append(valueMap.get(targetList.get(i).getName()).asString());

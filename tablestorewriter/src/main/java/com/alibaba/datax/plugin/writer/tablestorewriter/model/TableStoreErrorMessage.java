@@ -49,7 +49,9 @@ public class TableStoreErrorMessage {
     public static final String ATTR_COLUMN_NAME_IS_EMPTY_ERROR = "The name of item can not be a empty string in 'column'.";
     
     public static final String MULTI_ATTR_COLUMN_ERROR = "Multi item in 'column', column name : %s .";
-    
+
+    public static final String HAVE_NO_PRIMARY_KEY_COLUMN_ERROR = "Have no primary key column";
+
     public static final String COLUMN_CONVERSION_ERROR = "Column coversion error, src type : %s, src value: %s, expect type: %s .";
     
     public static final String PK_COLUMN_VALUE_IS_NULL_ERROR = "The column of record is NULL, primary key name : %s .";

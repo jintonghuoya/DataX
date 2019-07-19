@@ -74,18 +74,20 @@ public class WriterModelParser {
 
     public static TableStoreAttrColumn parseTableStoreAttrColumn(Map<String, Object> column) {
         if (column.containsKey(TableStoreConst.NAME) && column.containsKey(TableStoreConst.TYPE)
-                && column.containsKey(TableStoreConst.SEQUENCE) && column.size() == 3) {
+                && column.containsKey(TableStoreConst.SEQUENCE) && column.size() == 4) {
             Object type = column.get(TableStoreConst.TYPE);
             Object name = column.get(TableStoreConst.NAME);
             Object sequence = column.get(TableStoreConst.SEQUENCE);
+            Object primaryKey = column.get(TableStoreConst.PRIMARY_KEY);
             if (type instanceof String && name instanceof String && sequence instanceof Integer) {
                 String typeStr = (String) type;
                 String nameStr = (String) name;
                 Integer sequenceInt = (Integer) sequence;
+                Boolean primaryKeyBoolean = (Boolean) primaryKey;
                 if (nameStr.isEmpty()) {
                     throw new IllegalArgumentException(TableStoreErrorMessage.ATTR_COLUMN_NAME_IS_EMPTY_ERROR);
                 }
-                return new TableStoreAttrColumn(nameStr, parseColumnType(typeStr), sequenceInt);
+                return new TableStoreAttrColumn(nameStr, parseColumnType(typeStr), sequenceInt, primaryKeyBoolean);
             } else {
                 throw new IllegalArgumentException(TableStoreErrorMessage.ATTR_MAP_NAME_TYPE_ERROR);
             }
@@ -103,6 +105,15 @@ public class WriterModelParser {
                 pool.add(col.getName());
             }
         }
+
+        // 一定要有主键配置
+        for (TableStoreAttrColumn attr : attrs) {
+            if (attr.getPrimaryKey()) {
+                return;
+            }
+        }
+
+        throw new IllegalArgumentException(TableStoreErrorMessage.HAVE_NO_PRIMARY_KEY_COLUMN_ERROR);
     }
 
     public static List<TableStoreAttrColumn> parseTableStoreAttrColumnList(List<Object> values) {

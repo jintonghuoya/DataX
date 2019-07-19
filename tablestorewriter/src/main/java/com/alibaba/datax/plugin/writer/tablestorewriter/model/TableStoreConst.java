@@ -12,6 +12,7 @@ public class TableStoreConst {
     public final static String NAME = "name";
     public final static String TYPE = "type";
     public final static String SEQUENCE = "sequence";
+    public final static String PRIMARY_KEY = "primaryKey";
 
     public final static String TABLE_STORE_CONFIG = "tableStoreConfig";
 

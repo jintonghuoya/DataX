@@ -73,7 +73,7 @@ public class TableStoreWriterMasterProxy {
         tableStoreConfig.setPrimaryKeyColumn(WriterModelParser.parseTableStorePKColumnList(ParamChecker.checkListAndGet(configuration, Key.PRIMARY_KEY, true)));
         ParamChecker.checkPrimaryKey(tableMeta, tableStoreConfig.getPrimaryKeyColumn());
 
-        tableStoreConfig.setAttrColumn(WriterModelParser.parseTableStoreAttrColumnList(ParamChecker.checkListAndGet(configuration, Key.COLUMN, tableStoreConfig.getOperation() == TableStoreOpType.UPDATE_ROW ? true : false)));
+        tableStoreConfig.setAttrColumn(WriterModelParser.parseTableStoreAttrColumnList(ParamChecker.checkListAndGet(configuration, Key.COLUMN, tableStoreConfig.getOperation() == TableStoreOpType.UPDATE_ROW )));
         ParamChecker.checkAttribute(tableStoreConfig.getAttrColumn());
     }
 

@@ -6,14 +6,16 @@ public class TableStoreAttrColumn implements Comparable<TableStoreAttrColumn> {
     private String name;
     private ColumnType type;
     private int sequence;
+    private Boolean primaryKey;
 
     public TableStoreAttrColumn() {
     }
 
-    public TableStoreAttrColumn(String name, ColumnType type, int sequence) {
+    public TableStoreAttrColumn(String name, ColumnType type, int sequence, Boolean primaryKey) {
         this.name = name;
         this.type = type;
         this.sequence = sequence;
+        this.primaryKey = primaryKey;
     }
 
     public String getName() {
@@ -38,6 +40,14 @@ public class TableStoreAttrColumn implements Comparable<TableStoreAttrColumn> {
 
     public void setSequence(int sequence) {
         this.sequence = sequence;
+    }
+
+    public Boolean getPrimaryKey() {
+        return primaryKey;
+    }
+
+    public void setPrimaryKey(Boolean primaryKey) {
+        this.primaryKey = primaryKey;
     }
 
     @Override

@@ -39,46 +39,45 @@ OTS是构建在阿里云飞天分布式系统之上的 NoSQL数据库服务，�
                 "writer": {
                     "name": "otswriter",
                     "parameter": {
-                        "endpoint":"",
-                        "accessId":"",
-                        "accessKey":"",
-                        "instanceName":"",
-                        // 导出数据表的表名
-                        "table":"",
-
-                        // Writer支持不同类型之间进行相互转换
-                        // 如下类型转换不支持:
-                        // ================================
-                        //    int    -> binary
-                        //    double -> bool, binary
-                        //    bool   -> binary
-                        //    bytes  -> int, double, bool
-                        // ================================
-
-                        // 需要导入的PK列名，区分大小写
-                        // 类型支持：STRING，INT
-                        // 1. 支持类型转换，注意类型转换时的精度丢失
-                        // 2. 顺序不要求和表的Meta一致
-                        "primaryKey" : [
-                            {"name":"pk1", "type":"string"},
-                            {"name":"pk2", "type":"int"}
-                        ],
-
-                        // 需要导入的列名，区分大小写
-                        // 类型支持STRING，INT，DOUBLE，BOOL和BINARY
-                        "column" : [
-                            {"name":"col2", "type":"INT"},
-                            {"name":"col3", "type":"STRING"},
-                            {"name":"col4", "type":"STRING"},
-                            {"name":"col5", "type":"BINARY"},
-                            {"name":"col6", "type":"DOUBLE"}
-                        ],
-
-                        // 写入OTS的方式
-                        // PutRow : 等同于OTS API中PutRow操作，检查条件是ignore
-                        // UpdateRow : 等同于OTS API中UpdateRow操作，检查条件是ignore
-                        // DeleteRow: 等同于OTS API中DeleteRow操作，检查条件是ignore
-                        "writeMode" : "PutRow"
+                    "accessId": "LTAIrWgYsQEGTH6D",
+                    "accessKey": "Zd8AaNWmnPVaRMxQ8lajRt7vQuTDNP",
+                    "column": [
+                        {
+                            "name": "crhwd09fsydc",
+                            "primaryKey": true,
+                            "sequence": 1,
+                            "type": "STRING"
+                        },
+                        {
+                            "name": "trhwd0b3qio0",
+                            "primaryKey": true,
+                            "sequence": 2,
+                            "type": "STRING"
+                        }
+                    ],
+                    "endpoint": "https://lab-ts-dev01.cn-shanghai.ots.aliyuncs.com",
+                    "instanceName": "lab-ts-dev01",
+                    "primaryKey": [
+                        {
+                            "name": "hash_key",
+                            "type": "STRING"
+                        },
+                        {
+                            "name": "table_logical_name",
+                            "type": "STRING"
+                        },
+                        {
+                            "name": "primary_key_combo",
+                            "type": "STRING"
+                        },
+                        {
+                            "name": "serial_number",
+                            "type": "INTEGER"
+                        }
+                    ],
+                    "table": "sink_table_master_01",
+                    "tableLogicalName": "rhwd068xmgwtest",
+                    "writeMode": "PutRow"
                     }
                 }
             }
