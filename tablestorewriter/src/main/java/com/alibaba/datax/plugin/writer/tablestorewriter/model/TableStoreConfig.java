@@ -25,6 +25,11 @@ public class TableStoreConfig {
     private TableStoreOpType operation;
     private RestrictConfig restrictConfig;
 
+    /**
+     * 插入类型 见{@link com.alibaba.datax.insertcommon.constant.InsertEnum}
+     */
+    private String insertMode;
+
     //限制项
     public class RestrictConfig {
         private int requestTotalSizeLimitation = 1024 * 1024;
@@ -176,5 +181,13 @@ public class TableStoreConfig {
 
     public void setConnectTimeout(int connectTimeout) {
         this.connectTimeout = connectTimeout;
+    }
+
+    public String getInsertMode() {
+        return insertMode;
+    }
+
+    public void setInsertMode(String insertMode) {
+        this.insertMode = insertMode;
     }
 }

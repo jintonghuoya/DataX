@@ -73,8 +73,11 @@ public class WriterModelParser {
     }
 
     public static TableStoreAttrColumn parseTableStoreAttrColumn(Map<String, Object> column) {
-        if (column.containsKey(TableStoreConst.NAME) && column.containsKey(TableStoreConst.TYPE)
-                && column.containsKey(TableStoreConst.SEQUENCE) && column.size() == 4) {
+        if (column.containsKey(TableStoreConst.NAME)
+                && column.containsKey(TableStoreConst.TYPE)
+                && column.containsKey(TableStoreConst.SEQUENCE)
+                && column.containsKey(TableStoreConst.PRIMARY_KEY)
+                && column.size() == 4) {
             Object type = column.get(TableStoreConst.TYPE);
             Object name = column.get(TableStoreConst.NAME);
             Object sequence = column.get(TableStoreConst.SEQUENCE);

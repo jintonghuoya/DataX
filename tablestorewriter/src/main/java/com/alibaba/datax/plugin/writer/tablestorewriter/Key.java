@@ -35,4 +35,6 @@ public final class Key {
     public final static String COLUMN = "column";
     
     public final static String WRITE_MODE = "writeMode";
+
+    public final static String INSERT_MODE = "insertMode";
 }

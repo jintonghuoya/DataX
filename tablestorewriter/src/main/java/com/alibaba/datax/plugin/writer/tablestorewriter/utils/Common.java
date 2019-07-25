@@ -2,6 +2,7 @@ package com.alibaba.datax.plugin.writer.tablestorewriter.utils;
 
 import com.alibaba.datax.common.element.Column;
 import com.alibaba.datax.common.element.Record;
+import com.alibaba.datax.insertcommon.constant.Constant;
 import com.alibaba.datax.plugin.writer.tablestorewriter.model.*;
 import com.alicloud.openservices.tablestore.ClientException;
 import com.alicloud.openservices.tablestore.TableStoreException;
@@ -12,27 +13,6 @@ import org.apache.commons.math3.util.Pair;
 import java.util.*;
 
 public class Common {
-
-    /**
-     * 主键列中的逻辑表名
-     */
-    private static final String TABLE_LOGICAL_NAME = "table_logical_name";
-
-    /**
-     * 主键列中的逻辑数据中主键的列的连接字符串
-     * 由table_logical_name 和 primary_key_combo 就可保持记录的唯一性
-     */
-    private static final String PRIMARY_KEY_COMBO = "primary_key_combo";
-
-    /**
-     * 主键列中字段，该字段在tableStore保持自增
-     */
-    private static final String SERIAL_NUMBER = "serial_number";
-
-    /**
-     * 主键列中分区键, 由各字段计算出来,保持hash_key的值分布均匀
-     */
-    private static final String HASH_KEY = "hash_key";
 
     public static String getDetailMessage(Exception exception) {
         if (exception instanceof TableStoreException) {
@@ -75,10 +55,33 @@ public class Common {
         }
         // 获取属性列，并根据sequence排序，生成对应的
         PrimaryKeyBuilder primaryKeyBuilder = PrimaryKeyBuilder.createPrimaryKeyBuilder();
-        primaryKeyBuilder.addPrimaryKeyColumn(HASH_KEY, PrimaryKeyValue.fromString(hashKey))
-                .addPrimaryKeyColumn(TABLE_LOGICAL_NAME, PrimaryKeyValue.fromString(tableLogicalName))
-                .addPrimaryKeyColumn(PRIMARY_KEY_COMBO, PrimaryKeyValue.fromString(primaryKeyCombo))
-                .addPrimaryKeyColumn(SERIAL_NUMBER, PrimaryKeyValue.AUTO_INCREMENT);
+        primaryKeyBuilder.addPrimaryKeyColumn(Constant.HASH_KEY, PrimaryKeyValue.fromString(hashKey))
+                .addPrimaryKeyColumn(Constant.TABLE_LOGICAL_NAME, PrimaryKeyValue.fromString(tableLogicalName))
+                .addPrimaryKeyColumn(Constant.PRIMARY_KEY_COMBO, PrimaryKeyValue.fromString(primaryKeyCombo))
+                .addPrimaryKeyColumn(Constant.SERIAL_NUMBER, PrimaryKeyValue.AUTO_INCREMENT);
+        return primaryKeyBuilder.build();
+    }
+
+    /**
+     * 从一条已经存在的记录中构建主键
+     *
+     * @param conf
+     * @param attributes
+     * @param hashKey 索引获取而来的hashKey
+     * @param increment 索引获取而来的自增主键
+     * @return
+     */
+    public static PrimaryKey getExistRowPk(TableStoreConfig conf, List<Pair<String, ColumnValue>> attributes, String hashKey, Long increment) {
+        String tableLogicalName = conf.getTableLogicalName();
+        List<TableStoreAttrColumn> attrColumn = conf.getAttrColumn();
+        String primaryKeyCombo = generatePrimaryKeyCombo(attrColumn, attributes);
+
+        // 获取属性列，并根据sequence排序，生成对应的
+        PrimaryKeyBuilder primaryKeyBuilder = PrimaryKeyBuilder.createPrimaryKeyBuilder();
+        primaryKeyBuilder.addPrimaryKeyColumn(Constant.HASH_KEY, PrimaryKeyValue.fromString(hashKey))
+                .addPrimaryKeyColumn(Constant.TABLE_LOGICAL_NAME, PrimaryKeyValue.fromString(tableLogicalName))
+                .addPrimaryKeyColumn(Constant.PRIMARY_KEY_COMBO, PrimaryKeyValue.fromString(primaryKeyCombo))
+                .addPrimaryKeyColumn(Constant.SERIAL_NUMBER, PrimaryKeyValue.fromLong(increment));
         return primaryKeyBuilder.build();
     }
 
@@ -94,7 +97,7 @@ public class Common {
      * @param values
      * @return
      */
-    private static String generatePrimaryKeyCombo(List<TableStoreAttrColumn> attrColumns, List<Pair<String, ColumnValue>> values) {
+    public static String generatePrimaryKeyCombo(List<TableStoreAttrColumn> attrColumns, List<Pair<String, ColumnValue>> values) {
         Map<String, ColumnValue> valueMap = new HashMap<String, ColumnValue>();
         for (int i = 0; i < values.size(); i++) {
             valueMap.put(values.get(i).getKey(), values.get(i).getValue());

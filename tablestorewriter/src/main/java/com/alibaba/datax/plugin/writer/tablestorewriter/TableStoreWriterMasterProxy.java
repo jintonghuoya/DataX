@@ -1,6 +1,7 @@
 package com.alibaba.datax.plugin.writer.tablestorewriter;
 
 import com.alibaba.datax.common.util.Configuration;
+import com.alibaba.datax.insertcommon.constant.InsertEnum;
 import com.alibaba.datax.plugin.writer.tablestorewriter.callable.GetTableMetaCallable;
 import com.alibaba.datax.plugin.writer.tablestorewriter.model.TableStoreOpType;
 import com.alibaba.datax.plugin.writer.tablestorewriter.model.TableStoreConfig;
@@ -60,6 +61,8 @@ public class TableStoreWriterMasterProxy {
         tableStoreConfig.setTableLogicalName(ParamChecker.checkStringAndGet(configuration, Key.TABLE_LOGICAL_NAME));
 
         tableStoreConfig.setOperation(WriterModelParser.parseTableStoreOpType(ParamChecker.checkStringAndGet(configuration, Key.WRITE_MODE)));
+        // operation 在有了插入模式下，该写入类型没用，直接以insertMode适配
+
 
         syncClient = new SyncClient(
                 this.tableStoreConfig.getEndpoint(),
@@ -74,6 +77,10 @@ public class TableStoreWriterMasterProxy {
         ParamChecker.checkPrimaryKey(tableMeta, tableStoreConfig.getPrimaryKeyColumn());
 
         tableStoreConfig.setAttrColumn(WriterModelParser.parseTableStoreAttrColumnList(ParamChecker.checkListAndGet(configuration, Key.COLUMN, tableStoreConfig.getOperation() == TableStoreOpType.UPDATE_ROW )));
+        tableStoreConfig.setInsertMode(InsertEnum.getInsertEnum(ParamChecker.checkStringAndGet(configuration, Key.INSERT_MODE)).toString());
+
+        //
+
         ParamChecker.checkAttribute(tableStoreConfig.getAttrColumn());
     }
 
