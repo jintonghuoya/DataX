@@ -113,9 +113,10 @@ public class Common {
                 continue;
             }
 
-            String value = valueMap.get(targetList.get(i).getName()).asString();
+            // 主键可能会有除了String之外的类型，asString在这种情况下会报错，直接使用toString代替即可
+            String value = valueMap.get(targetList.get(i).getName()).toString();
             if (!Strings.isNullOrEmpty(value)) {
-                sb.append(valueMap.get(targetList.get(i).getName()).asString());
+                sb.append(value);
             }
         }
         return sb.toString();
