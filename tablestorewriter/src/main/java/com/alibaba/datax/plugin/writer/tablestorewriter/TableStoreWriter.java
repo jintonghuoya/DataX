@@ -8,17 +8,19 @@ import com.alibaba.datax.insertcommon.constant.Constant;
 import com.alibaba.datax.insertcommon.constant.InsertEnum;
 import com.alibaba.datax.plugin.writer.tablestorewriter.utils.Common;
 import com.alicloud.openservices.tablestore.ClientException;
-import com.alicloud.openservices.tablestore.DefaultTableStoreWriter;
 import com.alicloud.openservices.tablestore.SyncClient;
 import com.alicloud.openservices.tablestore.TableStoreException;
 import com.alicloud.openservices.tablestore.model.*;
-import com.alicloud.openservices.tablestore.writer.WriterConfig;
+import com.alicloud.openservices.tablestore.model.search.*;
+import com.alicloud.openservices.tablestore.model.search.query.TermQuery;
+import com.alicloud.openservices.tablestore.model.search.sort.PrimaryKeySort;
+import com.alicloud.openservices.tablestore.model.search.sort.Sort;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.Executors;
 
 public class TableStoreWriter {
     public static class Job extends Writer.Job {
@@ -31,10 +33,10 @@ public class TableStoreWriter {
             try {
                 this.proxy.init(getPluginJobConf());
             } catch (TableStoreException e) {
-                LOG.error("OTSException: {}",  e.getMessage(), e);
+                LOG.error("OTSException: {}", e.getMessage(), e);
                 throw DataXException.asDataXException(new TableStoreWriterError(e.getErrorCode(), "OTS端的错误"), Common.getDetailMessage(e), e);
             } catch (ClientException e) {
-                LOG.error("ClientException: {}",  e.getMessage(), e);
+                LOG.error("ClientException: {}", e.getMessage(), e);
                 throw DataXException.asDataXException(new TableStoreWriterError(e.getTraceId(), "OTS端的错误"), Common.getDetailMessage(e), e);
             } catch (IllegalArgumentException e) {
                 LOG.error("IllegalArgumentException. ErrorMsg:{}", e.getMessage(), e);
@@ -63,50 +65,78 @@ public class TableStoreWriter {
 
         @Override
         public void prepare() {
-            if (this.proxy.getTableStoreConfig().getInsertMode().equals(InsertEnum.TWM04)) {
+            if (this.proxy.getTableStoreConfig().getInsertMode().equals(InsertEnum.TWM04.toString())) {
+                LOG.info("delete all logic table:{} records", this.proxy.getTableStoreConfig().getTableLogicalName());
+                deleteAllRecords();
+            }
+        }
 
-                WriterConfig writerConfig = new WriterConfig();
-                writerConfig.setConcurrency(this.proxy.getTableStoreConfig().getConcurrencyWrite());
-                writerConfig.setMaxBatchRowsCount(this.proxy.getTableStoreConfig().getBatchWriteCount());
-                writerConfig.setMaxBatchSize(this.proxy.getTableStoreConfig().getRestrictConfig().getRequestTotalSizeLimitation());
-                writerConfig.setBufferSize(this.proxy.getTableStoreConfig().getBufferSize());
-                writerConfig.setMaxAttrColumnSize(this.proxy.getTableStoreConfig().getRestrictConfig().getAttributeColumnSize());
-                writerConfig.setMaxColumnsCount(this.proxy.getTableStoreConfig().getRestrictConfig().getMaxColumnsCount());
-                writerConfig.setMaxPKColumnSize(this.proxy.getTableStoreConfig().getRestrictConfig().getPrimaryKeyColumnSize());
+        /**
+         * 使用Token进行翻页，这个例子会把所有数据读出，放到一个List中。
+         */
+        private void deleteAllRecords() {
+            SearchQuery searchQuery = new SearchQuery();
+            TermQuery termQuery = new TermQuery();
+            termQuery.setFieldName(Constant.TABLE_LOGICAL_NAME);
+            termQuery.setTerm(new ColumnValue(this.proxy.getTableStoreConfig().getTableLogicalName(), ColumnType.STRING));
+            searchQuery.setQuery(termQuery);
+            searchQuery.setGetTotalCount(true);
+            searchQuery.setLimit(100);
+            SearchRequest searchRequest = new SearchRequest(this.proxy.getTableStoreConfig().getTableName(), Constant.INDEX_NAME, searchQuery);
 
-                SyncClient syncClient = new SyncClient(
-                        this.proxy.getTableStoreConfig().getEndpoint(),
-                        this.proxy.getTableStoreConfig().getAccessId(),
-                        this.proxy.getTableStoreConfig().getAccessKey(),
-                        this.proxy.getTableStoreConfig().getInstanceName()
-                );
+            SearchResponse resp = this.proxy.getSyncClient().search(searchRequest);
 
-                DeleteTableRequest request = new DeleteTableRequest(this.proxy.getTableStoreConfig().getTableName());
+            if (!resp.isAllSuccess()) {
+                throw new RuntimeException("not all success");
+            }
 
-                syncClient.deleteTable(request);
+            if (resp.getRows() != null && resp.getRows().size() > 0) {
+                batchWriteRow(resp.getRows());
+            }
 
-                TableMeta tableMeta = new TableMeta(this.proxy.getTableStoreConfig().getTableName());
-                tableMeta.addPrimaryKeyColumn(new PrimaryKeySchema(Constant.TABLE_LOGICAL_NAME, PrimaryKeyType.STRING));
-                tableMeta.addPrimaryKeyColumn(new PrimaryKeySchema(Constant.PRIMARY_KEY_COMBO, PrimaryKeyType.INTEGER));
-                tableMeta.addPrimaryKeyColumn(new PrimaryKeySchema(Constant.SERIAL_NUMBER, PrimaryKeyType.STRING));
-                tableMeta.addPrimaryKeyColumn(new PrimaryKeySchema(Constant.HASH_KEY, PrimaryKeyType.INTEGER, PrimaryKeyOption.AUTO_INCREMENT));
+            LOG.info("all size:{} will be deleted", resp.getTotalCount());
 
-                int timeToLive = -1; // 数据的过期时间, 单位秒, -1代表永不过期. 带索引表的主表数据过期时间必须为-1。
-                int maxVersions = 1; // 保存的最大版本数, 带索引表的请表最大版本数必须为1。
+            while (resp.getNextToken() != null) { //读到NextToken为null为止，即读出全部数据
+                //把Token设置到下一次请求中
+                searchRequest.getSearchQuery().setToken(resp.getNextToken());
+                resp = this.proxy.getSyncClient().search(searchRequest);
 
-                TableOptions tableOptions = new TableOptions(timeToLive, maxVersions);
+                if (!resp.isAllSuccess()) {
+                    throw new RuntimeException("not all success");
+                }
 
-                ArrayList<IndexMeta> indexMetas = new ArrayList<IndexMeta>();
-                IndexMeta indexMeta = new IndexMeta(Constant.INDEX_NAME);
+                if (resp.getRows() != null && resp.getRows().size() > 0) {
+                    batchWriteRow(resp.getRows());
+                }
+            }
+        }
 
-                indexMeta.addPrimaryKeyColumn(Constant.TABLE_LOGICAL_NAME); // 为索引表添加主键列。
-                indexMeta.addPrimaryKeyColumn(Constant.HASH_KEY); // 为索引表添加主键列。
-                indexMeta.addPrimaryKeyColumn(Constant.PRIMARY_KEY_COMBO); // 为索引表添加主键列。
-                indexMetas.add(indexMeta);
+        private void batchWriteRow(List<Row> rows) {
 
-                CreateTableRequest createTableRequest = new CreateTableRequest(tableMeta, tableOptions, indexMetas);// 创建主表时一同创建索引表。
+            BatchWriteRowRequest batchWriteRowRequest = new BatchWriteRowRequest();
 
-                syncClient.createTable(createTableRequest);
+            for (Row row : rows) {
+                RowDeleteChange rowDeleteChange = new RowDeleteChange(this.proxy.getTableStoreConfig().getTableName(), row.getPrimaryKey());
+
+                batchWriteRowRequest.addRowChange(rowDeleteChange);
+            }
+
+            BatchWriteRowResponse response = this.proxy.getSyncClient().batchWriteRow(batchWriteRowRequest);
+
+            LOG.info("是否全部成功:" + response.isAllSucceed());
+
+            if (!response.isAllSucceed()) {
+                for (BatchWriteRowResponse.RowResult rowResult : response.getFailedRows()) {
+                    LOG.error("失败的行:" + batchWriteRowRequest.getRowChange(rowResult.getTableName(), rowResult.getIndex()).getPrimaryKey());
+                    LOG.error("失败原因:" + rowResult.getError());
+                }
+                /**
+                 * 可以通过createRequestForRetry方法再构造一个请求对失败的行进行重试.这里只给出构造重试请求的部分.
+                 * 推荐的重试方法是使用SDK的自定义重试策略功能, 支持对batch操作的部分行错误进行重试. 设定重试策略后, 调用接口处即不需要增加重试代码.
+                 */
+//                BatchWriteRowRequest retryRequest = batchWriteRowRequest.createRequestForRetry(response.getFailedRows());
+
+
             }
         }
     }
@@ -116,7 +146,8 @@ public class TableStoreWriter {
         private TableStoreWriterSlaveProxy proxy = new TableStoreWriterSlaveProxy();
 
         @Override
-        public void init() {}
+        public void init() {
+        }
 
         @Override
         public void destroy() {
@@ -130,10 +161,10 @@ public class TableStoreWriter {
                 this.proxy.init(this.getPluginJobConf());
                 this.proxy.write(lineReceiver, this.getTaskPluginCollector());
             } catch (TableStoreException e) {
-                LOG.error("OTSException: {}",  e.getMessage(), e);
+                LOG.error("OTSException: {}", e.getMessage(), e);
                 throw DataXException.asDataXException(new TableStoreWriterError(e.getErrorCode(), "OTS端的错误"), Common.getDetailMessage(e), e);
             } catch (ClientException e) {
-                LOG.error("ClientException: {}",  e.getMessage(), e);
+                LOG.error("ClientException: {}", e.getMessage(), e);
                 throw DataXException.asDataXException(new TableStoreWriterError(e.getTraceId(), "OTS端的错误"), Common.getDetailMessage(e), e);
             } catch (IllegalArgumentException e) {
                 LOG.error("IllegalArgumentException. ErrorMsg:{}", e.getMessage(), e);

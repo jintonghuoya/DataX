@@ -240,6 +240,8 @@ public class TableStoreWriterSlaveProxy {
         Map<String, Row> hashMap = batchGetPrimaryKeyCombo(bufferList);
         List<TableStoreAttrColumn> attrColumn = tableStoreConfig.getAttrColumn();
 
+        List<Record> insertRecords = new ArrayList<Record>();
+
         for (Record record : bufferList) {
 
             List<Pair<String, ColumnValue>> attributes = Common.getAttrFromRecord(tableStoreConfig.getAttrColumn(), record);
@@ -248,28 +250,13 @@ public class TableStoreWriterSlaveProxy {
 
             // 忽略已重复行
             if (hashMap.containsKey(primaryKeyCombo)) {
-                LOG.info("insertTWM01 ignore row");
                 continue;
             }
 
-            // 类型转换
-            try {
-                RowChange rowChange = getRowChange(record, TableStoreOpType.PUT_ROW);
-                WithRecord withRecord = (WithRecord) rowChange;
-                withRecord.setRecord(record);
-
-                tableStoreWriter.addRowChange(rowChange);
-
-            } catch (IllegalArgumentException e) {
-                LOG.warn("Found dirty data.", e);
-                collector.collectDirtyRecord(record, e.getMessage());
-            } catch (ClientException e) {
-                LOG.warn("Found dirty data.", e);
-                collector.collectDirtyRecord(record, e.getMessage());
-            }
+            insertRecords.add(record);
         }
 
-        tableStoreWriter.flush();
+        insertRows(insertRecords, collector);
     }
 
     /**
@@ -322,7 +309,6 @@ public class TableStoreWriterSlaveProxy {
         List<TableStoreAttrColumn> attrColumn = tableStoreConfig.getAttrColumn();
 
         List<Record> deleteRecords = new ArrayList<Record>();
-        List<Record> insertRecords = new ArrayList<Record>();
 
         for (Record record : bufferList) {
 
@@ -332,13 +318,11 @@ public class TableStoreWriterSlaveProxy {
 
             if (rowMap.containsKey(primaryKeyCombo)) {
                 deleteRecords.add(record);
-            } else {
-                insertRecords.add(record);
             }
         }
 
         deleteRows(deleteRecords, collector, rowMap);
-        insertRows(insertRecords, collector);
+        insertRows(bufferList, collector);
     }
 
     /**
@@ -381,6 +365,7 @@ public class TableStoreWriterSlaveProxy {
         SearchResponse search = syncClient.search(searchRequest);
 
         if (search.getRows() == null || search.getRows().size() == 0) {
+            LOG.info("get empty rows from index");
             return Collections.emptyMap();
         }
 
@@ -391,6 +376,8 @@ public class TableStoreWriterSlaveProxy {
 
             hashMap.put(primaryKeyCombo, row);
         }
+
+        LOG.info("get rows from index. size:{}", search.getRows().size());
 
         return hashMap;
     }
@@ -430,6 +417,8 @@ public class TableStoreWriterSlaveProxy {
             }
         }
 
+        LOG.info("delete rows size:{}", deleteRecords.size());
+
         tableStoreWriter.flush();
     }
 
@@ -467,6 +456,8 @@ public class TableStoreWriterSlaveProxy {
             }
         }
 
+        LOG.info("update rows size:{}", updateRecords.size());
+
         tableStoreWriter.flush();
     }
 
@@ -499,6 +490,8 @@ public class TableStoreWriterSlaveProxy {
                 collector.collectDirtyRecord(insertRecord, e.getMessage());
             }
         }
+
+        LOG.info("insert rows size:{}", insertRecords.size());
 
         tableStoreWriter.flush();
     }

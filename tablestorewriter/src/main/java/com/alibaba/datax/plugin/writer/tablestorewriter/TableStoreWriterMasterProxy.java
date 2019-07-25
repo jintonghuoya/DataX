@@ -12,6 +12,7 @@ import com.alibaba.datax.plugin.writer.tablestorewriter.utils.ParamChecker;
 import com.alibaba.datax.plugin.writer.tablestorewriter.utils.RetryHelper;
 import com.alibaba.datax.plugin.writer.tablestorewriter.utils.WriterModelParser;
 import com.alicloud.openservices.tablestore.SyncClient;
+import com.alicloud.openservices.tablestore.TableStoreException;
 import com.alicloud.openservices.tablestore.model.TableMeta;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,6 +62,7 @@ public class TableStoreWriterMasterProxy {
         tableStoreConfig.setTableLogicalName(ParamChecker.checkStringAndGet(configuration, Key.TABLE_LOGICAL_NAME));
 
         tableStoreConfig.setOperation(WriterModelParser.parseTableStoreOpType(ParamChecker.checkStringAndGet(configuration, Key.WRITE_MODE)));
+        tableStoreConfig.setInsertMode(InsertEnum.getInsertEnum(ParamChecker.checkStringAndGet(configuration, Key.INSERT_MODE)).toString());
         // operation 在有了插入模式下，该写入类型没用，直接以insertMode适配
 
 
@@ -70,16 +72,13 @@ public class TableStoreWriterMasterProxy {
                 this.tableStoreConfig.getAccessKey(),
                 this.tableStoreConfig.getInstanceName());
 
+        tableStoreConfig.setPrimaryKeyColumn(WriterModelParser.parseTableStorePKColumnList(ParamChecker.checkListAndGet(configuration, Key.PRIMARY_KEY, true)));
+
         tableMeta = getTableMeta(syncClient, tableStoreConfig.getTableName());
         LOG.info("Table Meta : {}", GsonParser.metaToJson(tableMeta));
-
-        tableStoreConfig.setPrimaryKeyColumn(WriterModelParser.parseTableStorePKColumnList(ParamChecker.checkListAndGet(configuration, Key.PRIMARY_KEY, true)));
         ParamChecker.checkPrimaryKey(tableMeta, tableStoreConfig.getPrimaryKeyColumn());
 
-        tableStoreConfig.setAttrColumn(WriterModelParser.parseTableStoreAttrColumnList(ParamChecker.checkListAndGet(configuration, Key.COLUMN, tableStoreConfig.getOperation() == TableStoreOpType.UPDATE_ROW )));
-        tableStoreConfig.setInsertMode(InsertEnum.getInsertEnum(ParamChecker.checkStringAndGet(configuration, Key.INSERT_MODE)).toString());
-
-        //
+        tableStoreConfig.setAttrColumn(WriterModelParser.parseTableStoreAttrColumnList(ParamChecker.checkListAndGet(configuration, Key.COLUMN, tableStoreConfig.getOperation() == TableStoreOpType.UPDATE_ROW)));
 
         ParamChecker.checkAttribute(tableStoreConfig.getAttrColumn());
     }
@@ -111,5 +110,13 @@ public class TableStoreWriterMasterProxy {
                 tableStoreConfig.getRetry(),
                 tableStoreConfig.getSleepInMillisecond()
         );
+    }
+
+    public TableMeta getTableMeta() {
+        return tableMeta;
+    }
+
+    public SyncClient getSyncClient() {
+        return syncClient;
     }
 }
