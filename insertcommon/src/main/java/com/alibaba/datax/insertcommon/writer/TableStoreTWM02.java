@@ -19,9 +19,4 @@ public class TableStoreTWM02 extends AbstractWriter<SyncClient> {
     public TableStoreTWM02(TableStoreOperate tableStoreOperate) {
         this.tableStoreOperate = tableStoreOperate;
     }
-
-    @Override
-    public void batchInsert(List<Record> records) throws Exception {
-
-    }
 }

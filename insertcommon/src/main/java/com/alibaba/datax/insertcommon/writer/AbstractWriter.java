@@ -65,7 +65,7 @@ public abstract class AbstractWriter<C> {
      * @param records 写入的数据记录
      * @throws Exception 有问题抛出异常，正常导入则无异常
      */
-    protected void batchInsert(List<Record> records) throws Exception {
+    protected <T> void batchInsert(List<T> records) throws Exception {
         throw new MethodNotImplement();
     }
 

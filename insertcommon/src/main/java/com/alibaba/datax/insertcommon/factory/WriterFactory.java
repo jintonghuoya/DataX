@@ -40,7 +40,7 @@ public class WriterFactory {
      * @return writer实例
      * @throws Exception
      */
-    public AbstractWriter getWriter(String db, String insertType) throws Exception {
+    public static AbstractWriter getWriter(String db, String insertType) throws Exception {
 
         DBEnum dbEnum = DBEnum.getDBEnum(db.toUpperCase());
 

@@ -25,4 +25,9 @@ public enum DBEnum {
         }
         throw new NoDBTypeException();
     }
+
+    @Override
+    public String toString() {
+        return super.toString();
+    }
 }

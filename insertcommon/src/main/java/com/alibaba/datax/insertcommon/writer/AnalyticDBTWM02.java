@@ -21,8 +21,4 @@ public class AnalyticDBTWM02 extends AbstractWriter<AdbClient> {
         this.analyticDbOperate = analyticDbOperate;
     }
 
-    @Override
-    public void batchInsert(List<Record> records) throws Exception {
-        // todo
-    }
 }

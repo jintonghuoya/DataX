@@ -34,4 +34,9 @@ public enum InsertEnum {
         }
         throw new NoInsertTypeException();
     }
+
+    @Override
+    public String toString() {
+        return super.toString();
+    }
 }
